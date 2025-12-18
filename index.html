@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <title>오늘의 뇌구조</title>
 
-</script>
+<!-- html2canvas 반드시 필요 -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
 body {
@@ -32,7 +33,6 @@ body {
   overflow: hidden;
 }
 
-/* 뇌 이미지 */
 #brain img {
   position: absolute;
   width: 100%;
@@ -55,15 +55,9 @@ body {
   outline: 1px dashed #888;
 }
 
-.thought[contenteditable="true"] {
-  cursor: text;
-  outline: 1px dashed #555;
-}
-
 #controls {
   margin-top: 15px;
   display: none;
-  align-items: center;
   gap: 10px;
 }
 
@@ -80,7 +74,8 @@ body {
 <input id="inputBox" placeholder="지금 머릿속 생각을 입력하고 Enter">
 
 <div id="brain">
-  <img src="brain.png">
+  <!-- 중요 -->
+  <img src="brain.png" crossorigin="anonymous">
 </div>
 
 <div id="controls">
@@ -88,18 +83,18 @@ body {
   <input type="range" id="sizeSlider" min="12" max="60" value="24">
 </div>
 
-<button id="saveBtn" onclick="saveBrain()">이미지 저장</button>
+<button id="saveBtn">이미지 저장</button>
 
 <script>
 const brain = document.getElementById('brain');
 const input = document.getElementById('inputBox');
 const slider = document.getElementById('sizeSlider');
 const controls = document.getElementById('controls');
+const saveBtn = document.getElementById('saveBtn');
 
 let selected = null;
 let dragging = false;
 
-// 엔터 → 생각 생성
 input.addEventListener('keydown', e => {
   if (e.key === 'Enter' && input.value.trim()) {
     createThought(input.value.trim());
@@ -121,7 +116,6 @@ function createThought(text) {
   };
 
   div.onmousedown = () => {
-    if (div.contentEditable === "true") return;
     dragging = true;
     selectThought(div);
   };
@@ -133,21 +127,6 @@ function createThought(text) {
     const rect = brain.getBoundingClientRect();
     div.style.left = ((e.clientX - rect.left) / rect.width * 100) + '%';
     div.style.top  = ((e.clientY - rect.top) / rect.height * 100) + '%';
-  };
-
-  div.ondblclick = e => {
-    e.stopPropagation();
-    div.contentEditable = true;
-    div.focus();
-  };
-
-  div.onblur = () => div.contentEditable = false;
-
-  div.onkeydown = e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      div.blur();
-    }
   };
 
   brain.appendChild(div);
@@ -166,21 +145,18 @@ slider.oninput = e => {
   if (selected) selected.style.fontSize = e.target.value + 'px';
 };
 
-brain.onclick = () => {
-  document.querySelectorAll('.thought').forEach(t => t.classList.remove('selected'));
-  selected = null;
-  controls.style.display = 'none';
-};
-
-// ✅ 이미지 저장 (이제 배경 포함됨)
-function saveBrain() {
-  html2canvas(brain).then(canvas => {
+saveBtn.onclick = () => {
+  html2canvas(brain, {
+    useCORS: true,
+    allowTaint: false,
+    backgroundColor: null
+  }).then(canvas => {
     const link = document.createElement('a');
     link.download = '오늘의_뇌구조.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
   });
-}
+};
 </script>
 
 </body>
