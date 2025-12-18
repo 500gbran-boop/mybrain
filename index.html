@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>오늘의 뇌구조 (SVG)</title>
+
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -12,28 +13,36 @@ body {
   align-items: center;
   padding: 20px;
 }
+
 #inputBox {
   width: 420px;
+  height: 60px;
   padding: 10px;
   font-size: 16px;
   margin-bottom: 12px;
+  resize: none;
 }
+
 #controls {
   margin-bottom: 10px;
   display: none;
   gap: 10px;
   align-items: center;
 }
+
 #canvasWrap {
   background: #fff;
   border: 1px solid #ccc;
 }
+
 svg {
   user-select: none;
 }
-text.selected {
+
+text.selected tspan {
   outline: 1px dashed #888;
 }
+
 button {
   margin-top: 12px;
   padding: 10px 20px;
@@ -41,9 +50,10 @@ button {
 }
 </style>
 </head>
+
 <body>
 
-<textarea id="inputBox" placeholder="지금 머릿속 생각 입력 후 Shift+Enter로 줄바꿈" rows="2"></textarea>
+<textarea id="inputBox" placeholder="머릿속 생각 입력 후 Enter + Shift로 줄바꿈"></textarea>
 
 <div id="controls">
   중요도
@@ -72,14 +82,12 @@ let selected = null;
 let dragging = false;
 let offset = { x: 0, y: 0 };
 
-// Shift+Enter 줄바꿈 입력 감지
+// 엔터 → 생각 생성 (Shift+Enter는 줄바꿈)
 input.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Enter' && !e.shiftKey && input.value.trim()) {
+    createThought(input.value.trim());
+    input.value = '';
     e.preventDefault();
-    if (input.value.trim()) {
-      createThought(input.value.trim());
-      input.value = '';
-    }
   }
 });
 
@@ -92,12 +100,11 @@ function createThought(text) {
   t.setAttribute("font-weight", "bold");
   t.style.cursor = "move";
 
-  const fontSize = 24;
-
+  // 줄바꿈 처리
   text.split('\n').forEach((line, i) => {
     const tsp = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
     tsp.setAttribute("x", 300);
-    tsp.setAttribute("y", 300 + i * fontSize * 1.2);
+    tsp.setAttribute("dy", i === 0 ? "0" : "1.2em");
     tsp.textContent = line;
     t.appendChild(tsp);
   });
@@ -105,8 +112,8 @@ function createThought(text) {
   t.addEventListener('mousedown', e => {
     selectThought(t);
     dragging = true;
-    offset.x = e.offsetX - t.getAttribute("x");
-    offset.y = e.offsetY - t.getAttribute("y");
+    offset.x = e.offsetX - parseFloat(t.getAttribute("x"));
+    offset.y = e.offsetY - parseFloat(t.getAttribute("y"));
   });
 
   t.addEventListener('click', e => {
@@ -119,31 +126,35 @@ function createThought(text) {
 }
 
 function enableInlineEdit(textEl) {
-  const fontSize = parseInt(textEl.getAttribute('font-size'));
-  const lines = Array.from(textEl.querySelectorAll('tspan')).map(tsp => tsp.textContent);
+  const x = parseFloat(textEl.getAttribute('x'));
+  const y = parseFloat(textEl.getAttribute('y'));
+  const fontSize = parseFloat(textEl.getAttribute('font-size'));
+
   const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
-  fo.setAttribute("x", 300 - 5);
-  fo.setAttribute("y", 300 - fontSize);
+  fo.setAttribute("x", x - 5);
+  fo.setAttribute("y", y - fontSize);
   fo.setAttribute("width", 300);
-  fo.setAttribute("height", fontSize * lines.length * 1.5);
+  fo.setAttribute("height", fontSize * 4);
 
   const textarea = document.createElement('textarea');
-  textarea.value = lines.join('\n');
+  textarea.value = Array.from(textEl.querySelectorAll('tspan')).map(t => t.textContent).join('\n');
   textarea.style.width = '100%';
   textarea.style.height = '100%';
   textarea.style.fontSize = fontSize + 'px';
   textarea.style.fontWeight = 'bold';
   textarea.style.border = '1px solid #aaa';
+  textarea.style.resize = 'none';
+
   fo.appendChild(textarea);
   svg.appendChild(fo);
   textarea.focus();
 
   function commit() {
-    textEl.textContent = '';
+    textEl.innerHTML = '';
     textarea.value.split('\n').forEach((line, i) => {
       const tsp = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-      tsp.setAttribute("x", 300);
-      tsp.setAttribute("y", 300 + i * fontSize * 1.2);
+      tsp.setAttribute("x", x);
+      tsp.setAttribute("dy", i === 0 ? "0" : "1.2em");
       tsp.textContent = line;
       textEl.appendChild(tsp);
     });
@@ -152,18 +163,17 @@ function enableInlineEdit(textEl) {
 
   textarea.addEventListener('blur', commit);
   textarea.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) commit();
+    if (e.key === 'Enter' && !e.shiftKey) {
+      commit();
+      e.preventDefault();
+    }
   });
 }
 
 svg.addEventListener('mousemove', e => {
   if (!dragging || !selected) return;
   selected.setAttribute("x", e.offsetX - offset.x);
-  selected.querySelectorAll('tspan').forEach((tsp, i) => {
-    const fontSize = parseInt(selected.getAttribute('font-size'));
-    tsp.setAttribute("x", e.offsetX - offset.x);
-    tsp.setAttribute("y", e.offsetY - offset.y + i * fontSize * 1.2);
-  });
+  selected.setAttribute("y", e.offsetY - offset.y);
 });
 
 document.addEventListener('mouseup', () => dragging = false);
@@ -185,7 +195,4 @@ svg.addEventListener('click', e => {
 });
 
 slider.addEventListener('input', e => {
-  if (selected) {
-    selected.setAttribute("font-size", e.target.value);
-    selected.querySelectorAll('tspan').forEach((tsp, i) => {
-      tsp.setAttribute("y", parseInt(selected.getAttribute("
+  if (selected) selected
