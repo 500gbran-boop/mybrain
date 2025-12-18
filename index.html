@@ -115,16 +115,6 @@ function saveSVG() {
 
   URL.revokeObjectURL(url);
 }
-  //텍스트 삭제
-  document.addEventListener('keydown', e => {
-  if (!selected) return;
-
-  if (e.key === 'Delete' || e.key === 'Backspace') {
-    selected.remove();
-    selected = null;
-    controls.style.display = 'none';
-  }
-});
 </script>
 
 </body>
