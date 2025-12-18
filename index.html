@@ -1,11 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>오늘의 뇌구조</title>
-
-<!-- html2canvas 반드시 필요 -->
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<title>오늘의 뇌구조 (SVG)</title>
 
 <style>
 body {
@@ -24,45 +21,25 @@ body {
   margin-bottom: 15px;
 }
 
-#brain {
-  position: relative;
-  width: 600px;
-  height: 600px;
+#brainWrapper {
   background: #fff;
   border: 1px solid #ccc;
-  overflow: hidden;
 }
 
-#brain img {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-}
-
-.thought {
-  position: absolute;
+text {
+  fill: #c0392b;
   font-weight: bold;
-  color: #c0392b;
   cursor: move;
   user-select: none;
-  transform: translate(-50%, -50%);
-  white-space: nowrap;
 }
 
-.thought.selected {
-  outline: 1px dashed #888;
-}
-
-#controls {
-  margin-top: 15px;
-  display: none;
-  gap: 10px;
+text.selected {
+  stroke: #888;
+  stroke-dasharray: 2;
 }
 
 #saveBtn {
-  margin-top: 10px;
+  margin-top: 15px;
   padding: 10px 20px;
   cursor: pointer;
 }
@@ -73,89 +50,102 @@ body {
 
 <input id="inputBox" placeholder="지금 머릿속 생각을 입력하고 Enter">
 
-<div id="brain">
-  <!-- 중요 -->
-  <img src="brain.png" crossorigin="anonymous">
-</div>
+<div id="brainWrapper">
+<svg id="brainSVG" width="600" height="600"
+     viewBox="0 0 600 600"
+     xmlns="http://www.w3.org/2000/svg">
 
-<div id="controls">
-  중요도
-  <input type="range" id="sizeSlider" min="12" max="60" value="24">
+  <!-- 배경 뇌 이미지 -->
+  <image href="brain.png" x="0" y="0" width="600" height="600"/>
+
+</svg>
 </div>
 
 <button id="saveBtn">이미지 저장</button>
 
 <script>
-const brain = document.getElementById('brain');
-const input = document.getElementById('inputBox');
-const slider = document.getElementById('sizeSlider');
-const controls = document.getElementById('controls');
-const saveBtn = document.getElementById('saveBtn');
-
+const svg = document.getElementById("brainSVG");
+const input = document.getElementById("inputBox");
 let selected = null;
 let dragging = false;
+let offsetX = 0;
+let offsetY = 0;
 
-input.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && input.value.trim()) {
-    createThought(input.value.trim());
-    input.value = '';
+// 엔터 → 텍스트 추가
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && input.value.trim()) {
+    createText(input.value.trim());
+    input.value = "";
   }
 });
 
-function createThought(text) {
-  const div = document.createElement('div');
-  div.className = 'thought';
-  div.innerText = text;
-  div.style.left = '50%';
-  div.style.top = '50%';
-  div.style.fontSize = '24px';
+function createText(content) {
+  const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  t.setAttribute("x", 300);
+  t.setAttribute("y", 300);
+  t.setAttribute("font-size", 24);
+  t.textContent = content;
 
-  div.onclick = e => {
-    e.stopPropagation();
-    selectThought(div);
-  };
-
-  div.onmousedown = () => {
+  t.addEventListener("mousedown", e => {
     dragging = true;
-    selectThought(div);
-  };
-
-  document.onmouseup = () => dragging = false;
-
-  document.onmousemove = e => {
-    if (!dragging || selected !== div) return;
-    const rect = brain.getBoundingClientRect();
-    div.style.left = ((e.clientX - rect.left) / rect.width * 100) + '%';
-    div.style.top  = ((e.clientY - rect.top) / rect.height * 100) + '%';
-  };
-
-  brain.appendChild(div);
-  selectThought(div);
-}
-
-function selectThought(div) {
-  document.querySelectorAll('.thought').forEach(t => t.classList.remove('selected'));
-  selected = div;
-  div.classList.add('selected');
-  controls.style.display = 'flex';
-  slider.value = parseInt(div.style.fontSize);
-}
-
-slider.oninput = e => {
-  if (selected) selected.style.fontSize = e.target.value + 'px';
-};
-
-saveBtn.onclick = () => {
-  html2canvas(brain, {
-    useCORS: true,
-    allowTaint: false,
-    backgroundColor: null
-  }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = '오늘의_뇌구조.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    select(t);
+    offsetX = e.offsetX - t.getAttribute("x");
+    offsetY = e.offsetY - t.getAttribute("y");
   });
+
+  t.addEventListener("dblclick", e => {
+    e.stopPropagation();
+    const newText = prompt("수정", t.textContent);
+    if (newText !== null) t.textContent = newText;
+  });
+
+  svg.appendChild(t);
+  select(t);
+}
+
+svg.addEventListener("mousemove", e => {
+  if (!dragging || !selected) return;
+  selected.setAttribute("x", e.offsetX - offsetX);
+  selected.setAttribute("y", e.offsetY - offsetY);
+});
+
+window.addEventListener("mouseup", () => dragging = false);
+
+svg.addEventListener("click", () => {
+  if (selected) selected.classList.remove("selected");
+  selected = null;
+});
+
+function select(el) {
+  document.querySelectorAll("text").forEach(t => t.classList.remove("selected"));
+  selected = el;
+  el.classList.add("selected");
+}
+
+// ✅ SVG → PNG 저장 (GitHub Pages 가능)
+document.getElementById("saveBtn").onclick = () => {
+  const serializer = new XMLSerializer();
+  const source = serializer.serializeToString(svg);
+
+  const img = new Image();
+  const svgBlob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(svgBlob);
+
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 600;
+    canvas.height = 600;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+
+    const a = document.createElement("a");
+    a.download = "오늘의_뇌구조.png";
+    a.href = canvas.toDataURL("image/png");
+    a.click();
+  };
+
+  img.src = url;
 };
 </script>
 
