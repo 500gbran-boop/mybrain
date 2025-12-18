@@ -1,116 +1,103 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<title>오늘의 뇌구조</title>
-
+<meta charset="UTF-8" />
+<title>SVG Text Editor</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f2f2f2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-}
-
-#inputBox {
-  width: 420px;
-  padding: 10px;
-  font-size: 16px;
-  margin-bottom: 15px;
-}
-
-svg {
-  background: #fff;
-  border: 1px solid #ccc;
-}
-.editable {
-  font-size: 24px;
-  font-weight: bold;
-  color: #c0392b;
-  cursor: move;
-  outline: none;
-  white-space: nowrap;
-}
+  body {
+    margin: 0;
+    background: #111;
+    overflow: hidden;
+  }
+  svg {
+    width: 100vw;
+    height: 100vh;
+    background: #222;
+    cursor: default;
+  }
+  text {
+    fill: white;
+    user-select: none;
+    cursor: text;
+  }
+  text.editing {
+    user-select: text;
+    outline: none;
+  }
 </style>
 </head>
-
 <body>
 
-<input id="inputBox" placeholder="지금 머릿속 생각 입력 후 Enter">
-
-<svg id="brainSVG" width="600" height="600"
-     xmlns="http://www.w3.org/2000/svg">
-
-  <image
-    href="data:image/png;base64(정상적인_전체_base64)"
-    x="0" y="0" width="600" height="600" />
-
+<svg id="canvas">
+  <text x="100" y="150" font-size="40">여기를 클릭해서 수정</text>
 </svg>
 
-<button onclick="saveSVG()">이미지 저장</button>
-
 <script>
-const svg = document.getElementById("brainSVG");
-const input = document.getElementById("inputBox");
-
-let selected = null;
+const svg = document.getElementById("canvas");
+let selectedText = null;
+let isDragging = false;
 let offset = { x: 0, y: 0 };
 
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter" && input.value.trim()) {
-    createText(input.value.trim());
-    input.value = "";
+svg.addEventListener("mousedown", (e) => {
+  if (e.target.tagName === "text") {
+    selectText(e.target);
+    isDragging = true;
+
+    const bbox = e.target.getBBox();
+    offset.x = e.clientX - bbox.x;
+    offset.y = e.clientY - bbox.y;
+  } else {
+    deselectText();
   }
 });
 
-function createText(text) {
-  const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
-  fo.setAttribute("x", 250);
-  fo.setAttribute("y", 280);
-  fo.setAttribute("width", 300);
-  fo.setAttribute("height", 50);
-
-  const div = document.createElement("div");
-  div.className = "editable";
-  div.contentEditable = "true";
-  div.textContent = text;
-
-  div.addEventListener("mousedown", e => {
-    selected = fo;
-    offset.x = e.offsetX;
-    offset.y = e.offsetY;
-    e.stopPropagation();
-  });
-
-  fo.appendChild(div);
-  svg.appendChild(fo);
-}
-
-// 드래그
-svg.addEventListener("mousemove", e => {
-  if (!selected) return;
-  selected.setAttribute("x", e.offsetX - offset.x);
-  selected.setAttribute("y", e.offsetY - offset.y);
+svg.addEventListener("mousemove", (e) => {
+  if (isDragging && selectedText) {
+    selectedText.setAttribute("x", e.clientX - offset.x);
+    selectedText.setAttribute("y", e.clientY - offset.y);
+  }
 });
 
-svg.addEventListener("mouseup", () => selected = null);
-svg.addEventListener("mouseleave", () => selected = null);
+svg.addEventListener("mouseup", () => {
+  isDragging = false;
+});
 
-// SVG 저장
-function saveSVG() {
-  const serializer = new XMLSerializer();
-  const source = serializer.serializeToString(svg);
-  const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
+svg.addEventListener("wheel", (e) => {
+  if (!selectedText) return;
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "오늘의_뇌구조.svg";
-  a.click();
+  e.preventDefault();
+  let size = parseFloat(selectedText.getAttribute("font-size"));
+  size += e.deltaY < 0 ? 2 : -2;
+  size = Math.max(8, size);
+  selectedText.setAttribute("font-size", size);
+}, { passive: false });
 
-  URL.revokeObjectURL(url);
+document.addEventListener("keydown", (e) => {
+  if (!selectedText) return;
+
+  if (e.key === "Delete") {
+    selectedText.remove();
+    selectedText = null;
+  }
+});
+
+function selectText(textEl) {
+  if (selectedText && selectedText !== textEl) {
+    deselectText();
+  }
+
+  selectedText = textEl;
+  textEl.classList.add("editing");
+  textEl.setAttribute("contenteditable", "true");
+  textEl.focus();
+}
+
+function deselectText() {
+  if (!selectedText) return;
+
+  selectedText.classList.remove("editing");
+  selectedText.removeAttribute("contenteditable");
+  selectedText = null;
 }
 </script>
 
