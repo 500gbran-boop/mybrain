@@ -72,11 +72,10 @@ function createText(text) {
   t.setAttribute("y", 300);
   t.setAttribute("font-size", 24);
 
-  // 선택 + 드래그 시작
   t.addEventListener("mousedown", e => {
     selected = t;
-    offset.x = e.offsetX - parseFloat(t.getAttribute("x"));
-    offset.y = e.offsetY - parseFloat(t.getAttribute("y"));
+    offset.x = e.offsetX - t.getAttribute("x");
+    offset.y = e.offsetY - t.getAttribute("y");
   });
 
   svg.appendChild(t);
@@ -89,19 +88,8 @@ svg.addEventListener("mousemove", e => {
   selected.setAttribute("y", e.offsetY - offset.y);
 });
 
-// 드래그 종료
 svg.addEventListener("mouseup", () => selected = null);
 svg.addEventListener("mouseleave", () => selected = null);
-
-// ✅ 선택된 텍스트 삭제 (Delete / Backspace)
-document.addEventListener("keydown", e => {
-  if (!selected) return;
-
-  if (e.key === "Delete" || e.key === "Backspace") {
-    selected.remove();
-    selected = null;
-  }
-});
 
 // SVG 저장
 function saveSVG() {
