@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>오늘의 뇌구조</title>
+
+</script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+#inputBox {
+  width: 420px;
+  padding: 10px;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+#brain {
+  position: relative;
+  width: 600px;
+  height: 600px;
+  background: #fff;
+  border: 1px solid #ccc;
+  overflow: hidden;
+}
+
+/* 뇌 이미지 */
+#brain img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.thought {
+  position: absolute;
+  font-weight: bold;
+  color: #c0392b;
+  cursor: move;
+  user-select: none;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+.thought.selected {
+  outline: 1px dashed #888;
+}
+
+.thought[contenteditable="true"] {
+  cursor: text;
+  outline: 1px dashed #555;
+}
+
+#controls {
+  margin-top: 15px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+
+#saveBtn {
+  margin-top: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<input id="inputBox" placeholder="지금 머릿속 생각을 입력하고 Enter">
+
+<div id="brain">
+  <img src="brain.png">
+</div>
+
+<div id="controls">
+  중요도
+  <input type="range" id="sizeSlider" min="12" max="60" value="24">
+</div>
+
+<button id="saveBtn" onclick="saveBrain()">이미지 저장</button>
+
+<script>
+const brain = document.getElementById('brain');
+const input = document.getElementById('inputBox');
+const slider = document.getElementById('sizeSlider');
+const controls = document.getElementById('controls');
+
+let selected = null;
+let dragging = false;
+
+// 엔터 → 생각 생성
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && input.value.trim()) {
+    createThought(input.value.trim());
+    input.value = '';
+  }
+});
+
+function createThought(text) {
+  const div = document.createElement('div');
+  div.className = 'thought';
+  div.innerText = text;
+  div.style.left = '50%';
+  div.style.top = '50%';
+  div.style.fontSize = '24px';
+
+  div.onclick = e => {
+    e.stopPropagation();
+    selectThought(div);
+  };
+
+  div.onmousedown = () => {
+    if (div.contentEditable === "true") return;
+    dragging = true;
+    selectThought(div);
+  };
+
+  document.onmouseup = () => dragging = false;
+
+  document.onmousemove = e => {
+    if (!dragging || selected !== div) return;
+    const rect = brain.getBoundingClientRect();
+    div.style.left = ((e.clientX - rect.left) / rect.width * 100) + '%';
+    div.style.top  = ((e.clientY - rect.top) / rect.height * 100) + '%';
+  };
+
+  div.ondblclick = e => {
+    e.stopPropagation();
+    div.contentEditable = true;
+    div.focus();
+  };
+
+  div.onblur = () => div.contentEditable = false;
+
+  div.onkeydown = e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      div.blur();
+    }
+  };
+
+  brain.appendChild(div);
+  selectThought(div);
+}
+
+function selectThought(div) {
+  document.querySelectorAll('.thought').forEach(t => t.classList.remove('selected'));
+  selected = div;
+  div.classList.add('selected');
+  controls.style.display = 'flex';
+  slider.value = parseInt(div.style.fontSize);
+}
+
+slider.oninput = e => {
+  if (selected) selected.style.fontSize = e.target.value + 'px';
+};
+
+brain.onclick = () => {
+  document.querySelectorAll('.thought').forEach(t => t.classList.remove('selected'));
+  selected = null;
+  controls.style.display = 'none';
+};
+
+// ✅ 이미지 저장 (이제 배경 포함됨)
+function saveBrain() {
+  html2canvas(brain).then(canvas => {
+    const link = document.createElement('a');
+    link.download = '오늘의_뇌구조.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+</script>
+
+</body>
+</html>
