@@ -56,6 +56,9 @@ button {
 <div id="controls">
   중요도
   <input type="range" id="sizeSlider" min="12" max="60" value="24">
+  색상:
+  <button onclick="changeColor('#000000')">검정</button>
+  <button onclick="changeColor('#c0392b')">빨강</button>
 </div>
 
 <div id="canvasWrap">
@@ -134,6 +137,10 @@ slider.addEventListener('input', e => {
   if (selected) selected.setAttribute("font-size", e.target.value);
 });
 
+function changeColor(color) {
+  if (selected) selected.setAttribute("fill", color);
+}
+
 function enableInlineEdit(textEl) {
   const x = +textEl.getAttribute('x');
   const y = +textEl.getAttribute('y');
@@ -158,6 +165,7 @@ function enableInlineEdit(textEl) {
   function commit() {
     textEl.textContent = input.value;
     svg.removeChild(fo);
+    selectThought(textEl); // 편집 후에도 selected 유지
   }
 
   input.addEventListener('blur', commit);
