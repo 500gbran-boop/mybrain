@@ -1,10 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
 <title>오늘의 뇌구조</title>
-
-</script>
 
 <style>
 body {
@@ -23,169 +21,92 @@ body {
   margin-bottom: 15px;
 }
 
-#brain {
-  position: relative;
-  width: 600px;
-  height: 600px;
+svg {
   background: #fff;
   border: 1px solid #ccc;
-  overflow: hidden;
 }
 
-/* 뇌 이미지 */
-#brain img {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-}
-
-.thought {
-  position: absolute;
+text {
+  fill: #c0392b;
   font-weight: bold;
-  color: #c0392b;
   cursor: move;
   user-select: none;
-  transform: translate(-50%, -50%);
-  white-space: nowrap;
-}
-
-.thought.selected {
-  outline: 1px dashed #888;
-}
-
-.thought[contenteditable="true"] {
-  cursor: text;
-  outline: 1px dashed #555;
-}
-
-#controls {
-  margin-top: 15px;
-  display: none;
-  align-items: center;
-  gap: 10px;
-}
-
-#saveBtn {
-  margin-top: 10px;
-  padding: 10px 20px;
-  cursor: pointer;
 }
 </style>
 </head>
 
 <body>
 
-<input id="inputBox" placeholder="지금 머릿속 생각을 입력하고 Enter">
+<input id="inputBox" placeholder="지금 머릿속 생각 입력 후 Enter">
 
-<div id="brain">
-  <img src="data:image/png;base64,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">
-</div>
+<svg id="brainSVG" width="600" height="600"
+     xmlns="http://www.w3.org/2000/svg">
 
-<div id="controls">
-  중요도
-  <input type="range" id="sizeSlider" min="12" max="60" value="24">
-</div>
+  <!-- 뇌 배경 (base64) -->
+  <image
+    href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN4AAADjCAMAAADdXVr2AAAA/FBMVEX////6+/77/P7s7vT3+Pv09vv3+f3v8vfs7vPQ1d78/PzV2ujn6/NZcJW4xNbl5u7IzdvV2+XBx9emsMfc3+uiqr/By99tgqustMfl5+xOaJTIztWvuMWZprqSo7aSn7WJlLOzuc2hqcWCkrtbdadJYY5JX5FXapZfcZpmeaRxhKh8j7F1iK5jcaBRaJqYpceFlrDM0eayvtlMY4pndZd3gqFZaI14hp5PYZBfe6V8jqxDZ5dFWIhHYIOLnrk/XoRhdpRLXJdBV3ZHVnw9YphNcJ2eo8E+V5mFmLBPZZ6/yOJzgq9TbpBAZIlIVoZmhauCh6iMmb46U39sco+0Xx/kAAA"
+    x="0" y="0" width="600" height="600" />
+</svg>
 
-<button id="saveBtn" onclick="saveBrain()">이미지 저장</button>
+<button onclick="saveSVG()">이미지 저장</button>
 
 <script>
-const brain = document.getElementById('brain');
-const input = document.getElementById('inputBox');
-const slider = document.getElementById('sizeSlider');
-const controls = document.getElementById('controls');
+const svg = document.getElementById("brainSVG");
+const input = document.getElementById("inputBox");
 
 let selected = null;
-let dragging = false;
+let offset = { x: 0, y: 0 };
 
-// 엔터 → 생각 생성
-input.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && input.value.trim()) {
-    createThought(input.value.trim());
-    input.value = '';
+// Enter → 텍스트 생성
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && input.value.trim()) {
+    createText(input.value.trim());
+    input.value = "";
   }
 });
 
-function createThought(text) {
-  const div = document.createElement('div');
-  div.className = 'thought';
-  div.innerText = text;
-  div.style.left = '50%';
-  div.style.top = '50%';
-  div.style.fontSize = '24px';
+function createText(text) {
+  const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  t.textContent = text;
+  t.setAttribute("x", 300);
+  t.setAttribute("y", 300);
+  t.setAttribute("font-size", 24);
 
-  div.onclick = e => {
-    e.stopPropagation();
-    selectThought(div);
-  };
-
-  div.onmousedown = () => {
-    if (div.contentEditable === "true") return;
-    dragging = true;
-    selectThought(div);
-  };
-
-  document.onmouseup = () => dragging = false;
-
-  document.onmousemove = e => {
-    if (!dragging || selected !== div) return;
-    const rect = brain.getBoundingClientRect();
-    div.style.left = ((e.clientX - rect.left) / rect.width * 100) + '%';
-    div.style.top  = ((e.clientY - rect.top) / rect.height * 100) + '%';
-  };
-
-  div.ondblclick = e => {
-    e.stopPropagation();
-    div.contentEditable = true;
-    div.focus();
-  };
-
-  div.onblur = () => div.contentEditable = false;
-
-  div.onkeydown = e => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      div.blur();
-    }
-  };
-
-  brain.appendChild(div);
-  selectThought(div);
-}
-
-function selectThought(div) {
-  document.querySelectorAll('.thought').forEach(t => t.classList.remove('selected'));
-  selected = div;
-  div.classList.add('selected');
-  controls.style.display = 'flex';
-  slider.value = parseInt(div.style.fontSize);
-}
-
-slider.oninput = e => {
-  if (selected) selected.style.fontSize = e.target.value + 'px';
-};
-
-brain.onclick = () => {
-  document.querySelectorAll('.thought').forEach(t => t.classList.remove('selected'));
-  selected = null;
-  controls.style.display = 'none';
-};
-
-// ✅ 이미지 저장 (이제 배경 포함됨)
-function saveBrain() {
-  html2canvas(brain).then(canvas => {
-    const link = document.createElement('a');
-    link.download = '오늘의_뇌구조.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+  t.addEventListener("mousedown", e => {
+    selected = t;
+    offset.x = e.offsetX - t.getAttribute("x");
+    offset.y = e.offsetY - t.getAttribute("y");
   });
-}
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
+  svg.appendChild(t);
+}
+
+// 드래그 이동
+svg.addEventListener("mousemove", e => {
+  if (!selected) return;
+  selected.setAttribute("x", e.offsetX - offset.x);
+  selected.setAttribute("y", e.offsetY - offset.y);
+});
+
+svg.addEventListener("mouseup", () => selected = null);
+svg.addEventListener("mouseleave", () => selected = null);
+
+// SVG 저장
+function saveSVG() {
+  const serializer = new XMLSerializer();
+  const source = serializer.serializeToString(svg);
+
+  const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "오늘의_뇌구조.svg";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
 </script>
 
 </body>
 </html>
-
-
