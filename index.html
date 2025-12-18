@@ -37,14 +37,13 @@ text {
 
 <body>
 
-<input id="inputBox" placeholder="지금 머릿속 생각 입력 후 Enter">
+<input id="inputBox" placeholder="지금 머릿속 생각 입력 후 Enter" autofocus>
 
 <svg id="brainSVG" width="600" height="600"
      xmlns="http://www.w3.org/2000/svg">
 
-  <!-- 뇌 배경 (base64) -->
   <image
-    href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN4AAADjCAMAAADdXVr2AAAA/FBMVEX////6+/77/P7s7vT3+Pv09vv3+f3v8vfs7vPQ1d78/PzV2ujn6/NZcJW4xNbl5u7IzdvV2+XBx9emsMfc3+uiqr/By99tgqustMfl5+xOaJTIztWvuMWZprqSo7aSn7WJlLOzuc2hqcWCkrtbdadJYY5JX5FXapZfcZpmeaRxhKh8j7F1iK5jcaBRaJqYpceFlrDM0eayvtlMY4pndZd3gqFZaI14hp5PYZBfe6V8jqxDZ5dFWIhHYIOLnrk/XoRhdpRLXJdBV3ZHVnw9YphNcJ2eo8E+V5mFmLBPZZ6/yOJzgq9TbpBAZIlIVoZmhauCh6iMmb46U39sco+0Xx/kAAA"
+    href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN4AAADjCAMAAADdXVr2AAAA"
     x="0" y="0" width="600" height="600" />
 </svg>
 
@@ -57,8 +56,8 @@ const input = document.getElementById("inputBox");
 let selected = null;
 let offset = { x: 0, y: 0 };
 
-// Enter → 텍스트 생성
-input.addEventListener("keydown", e => {
+// ✅ 엔터 입력 (keyup이 더 안정적)
+input.addEventListener("keyup", e => {
   if (e.key === "Enter" && input.value.trim()) {
     createText(input.value.trim());
     input.value = "";
@@ -79,6 +78,9 @@ function createText(text) {
   });
 
   svg.appendChild(t);
+
+  // ✅ 텍스트 추가 후 입력창 포커스 복귀
+  input.focus();
 }
 
 // 드래그 이동
@@ -88,8 +90,15 @@ svg.addEventListener("mousemove", e => {
   selected.setAttribute("y", e.offsetY - offset.y);
 });
 
-svg.addEventListener("mouseup", () => selected = null);
-svg.addEventListener("mouseleave", () => selected = null);
+svg.addEventListener("mouseup", () => {
+  selected = null;
+  input.focus(); // ✅ SVG 클릭 후에도 포커스 복구
+});
+
+svg.addEventListener("mouseleave", () => {
+  selected = null;
+  input.focus();
+});
 
 // SVG 저장
 function saveSVG() {
