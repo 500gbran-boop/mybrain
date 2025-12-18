@@ -18,7 +18,14 @@ body {
   width: 420px;
   padding: 10px;
   font-size: 16px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
+}
+
+#controls {
+  margin-bottom: 10px;
+  display: none;
+  align-items: center;
+  gap: 10px;
 }
 
 svg {
@@ -39,6 +46,11 @@ text {
 
 <input id="inputBox" placeholder="지금 머릿속 생각 입력 후 Enter" autofocus>
 
+<div id="controls">
+  생각 크기
+  <input type="range" id="sizeSlider" min="12" max="60" value="24">
+</div>
+
 <svg id="brainSVG" width="600" height="600"
      xmlns="http://www.w3.org/2000/svg">
 
@@ -52,11 +64,13 @@ text {
 <script>
 const svg = document.getElementById("brainSVG");
 const input = document.getElementById("inputBox");
+const controls = document.getElementById("controls");
+const slider = document.getElementById("sizeSlider");
 
-let selected = null;
+let selectedText = null;
 let offset = { x: 0, y: 0 };
 
-// ✅ 엔터 입력 (keyup이 더 안정적)
+// 엔터 → 텍스트 생성
 input.addEventListener("keyup", e => {
   if (e.key === "Enter" && input.value.trim()) {
     createText(input.value.trim());
@@ -72,32 +86,43 @@ function createText(text) {
   t.setAttribute("font-size", 24);
 
   t.addEventListener("mousedown", e => {
-    selected = t;
+    selectedText = t;
+    controls.style.display = "flex";
+    slider.value = t.getAttribute("font-size");
+
     offset.x = e.offsetX - t.getAttribute("x");
     offset.y = e.offsetY - t.getAttribute("y");
   });
 
   svg.appendChild(t);
-
-  // ✅ 텍스트 추가 후 입력창 포커스 복귀
   input.focus();
 }
 
 // 드래그 이동
 svg.addEventListener("mousemove", e => {
-  if (!selected) return;
-  selected.setAttribute("x", e.offsetX - offset.x);
-  selected.setAttribute("y", e.offsetY - offset.y);
+  if (!selectedText) return;
+  selectedText.setAttribute("x", e.offsetX - offset.x);
+  selectedText.setAttribute("y", e.offsetY - offset.y);
 });
 
 svg.addEventListener("mouseup", () => {
-  selected = null;
-  input.focus(); // ✅ SVG 클릭 후에도 포커스 복구
+  selectedText = null;
+  input.focus();
 });
 
-svg.addEventListener("mouseleave", () => {
-  selected = null;
-  input.focus();
+// 크기 조절
+slider.addEventListener("input", e => {
+  if (selectedText) {
+    selectedText.setAttribute("font-size", e.target.value);
+  }
+});
+
+// 바탕 클릭 시 선택 해제
+svg.addEventListener("click", e => {
+  if (e.target === svg) {
+    selectedText = null;
+    controls.style.display = "none";
+  }
 });
 
 // SVG 저장
@@ -119,5 +144,3 @@ function saveSVG() {
 
 </body>
 </html>
-
-
