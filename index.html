@@ -25,7 +25,6 @@ svg {
   background: #fff;
   border: 1px solid #ccc;
 }
-
 .editable {
   font-size: 24px;
   font-weight: bold;
@@ -33,11 +32,6 @@ svg {
   cursor: move;
   outline: none;
   white-space: nowrap;
-  user-select: text;
-}
-
-.selected {
-  outline: 1px dashed #999;
 }
 </style>
 </head>
@@ -49,10 +43,10 @@ svg {
 <svg id="brainSVG" width="600" height="600"
      xmlns="http://www.w3.org/2000/svg">
 
-  <!-- 뇌 배경 (base64) -->
   <image
-    href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAN4AAADjCAMAAADdXVr2AAAA/FBMVEX////6+/77/P7s7vT3+Pv09vv3+f3v8vfs7vPQ1d78/PzV2ujn6/NZcJW4xNbl5u7IzdvV2+XBx9emsMfc3+uiqr/By99tgqustMfl5+xOaJTIztWvuMWZprqSo7aSn7WJlLOzuc2hqcWCkrtbdadJYY5JX5FXapZfcZpmeaRxhKh8j7F1iK5jcaBRaJqYpceFlrDM0eayvtlMY4pndZd3gqFZaI14hp5PYZBfe6V8jqxDZ5dFWIhHYIOLnrk/XoRhdpRLXJdBV3ZHVnw9YphNcJ2eo8E+V5mFmLBPZZ6/yOJzgq9TbpBAZIlIVoZmhauCh6iMmb46U39sco+0Xx/kAAA"
+    href="data:image/png;base64(정상적인_전체_base64)"
     x="0" y="0" width="600" height="600" />
+
 </svg>
 
 <button onclick="saveSVG()">이미지 저장</button>
@@ -61,11 +55,9 @@ svg {
 const svg = document.getElementById("brainSVG");
 const input = document.getElementById("inputBox");
 
-let selectedFO = null;
-let selectedDiv = null;
+let selected = null;
 let offset = { x: 0, y: 0 };
 
-// Enter → 텍스트 생성
 input.addEventListener("keydown", e => {
   if (e.key === "Enter" && input.value.trim()) {
     createText(input.value.trim());
@@ -76,7 +68,7 @@ input.addEventListener("keydown", e => {
 function createText(text) {
   const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
   fo.setAttribute("x", 250);
-  fo.setAttribute("y", 300);
+  fo.setAttribute("y", 280);
   fo.setAttribute("width", 300);
   fo.setAttribute("height", 50);
 
@@ -84,58 +76,27 @@ function createText(text) {
   div.className = "editable";
   div.contentEditable = "true";
   div.textContent = text;
-  div.style.fontSize = "24px";
 
-  // 선택 + 드래그 시작
   div.addEventListener("mousedown", e => {
-    selectText(fo, div);
+    selected = fo;
     offset.x = e.offsetX;
     offset.y = e.offsetY;
     e.stopPropagation();
   });
 
-  // 휠로 크기 조절
-  div.addEventListener("wheel", e => {
-    e.preventDefault();
-    let size = parseInt(window.getComputedStyle(div).fontSize);
-    size += e.deltaY < 0 ? 2 : -2;
-    size = Math.max(12, Math.min(80, size));
-    div.style.fontSize = size + "px";
-  });
-
   fo.appendChild(div);
   svg.appendChild(fo);
-  selectText(fo, div);
 }
 
-// 선택 처리
-function selectText(fo, div) {
-  document.querySelectorAll(".editable").forEach(d => d.classList.remove("selected"));
-  selectedFO = fo;
-  selectedDiv = div;
-  div.classList.add("selected");
-  div.focus();
-}
-
-// 드래그 이동
+// 드래그
 svg.addEventListener("mousemove", e => {
-  if (!selectedFO) return;
-  selectedFO.setAttribute("x", e.offsetX - offset.x);
-  selectedFO.setAttribute("y", e.offsetY - offset.y);
+  if (!selected) return;
+  selected.setAttribute("x", e.offsetX - offset.x);
+  selected.setAttribute("y", e.offsetY - offset.y);
 });
 
-svg.addEventListener("mouseup", () => {});
-svg.addEventListener("mouseleave", () => {});
-
-// Delete 키 → 삭제
-document.addEventListener("keydown", e => {
-  if ((e.key === "Delete" || e.key === "Backspace") && selectedFO) {
-    e.preventDefault();
-    selectedFO.remove();
-    selectedFO = null;
-    selectedDiv = null;
-  }
-});
+svg.addEventListener("mouseup", () => selected = null);
+svg.addEventListener("mouseleave", () => selected = null);
 
 // SVG 저장
 function saveSVG() {
