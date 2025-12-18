@@ -62,6 +62,92 @@ svg.addEventListener("mouseup", () => {
   isDragging = false;
 });
 
+function selectText(textEl) {
+  if (selectedText && selectedText !== textEl) {
+    deselectText();
+  }
+
+  selectedText = textEl;
+  textEl.classList.add("editing");
+  textEl.setAttribute("contenteditable", "true");
+  textEl.focus();
+}
+
+function deselectText() {
+  if (!selectedText) return;
+
+  selectedText.classList.remove("editing");
+  selectedText.removeAttribute("contenteditable");
+  selectedText = null;
+}
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>SVG Text Editor</title>
+<style>
+  body {
+    margin: 0;
+    background: #111;
+    overflow: hidden;
+  }
+  svg {
+    width: 100vw;
+    height: 100vh;
+    background: #222;
+    cursor: default;
+  }
+  text {
+    fill: white;
+    user-select: none;
+    cursor: text;
+  }
+  text.editing {
+    user-select: text;
+    outline: none;
+  }
+</style>
+</head>
+<body>
+
+<svg id="canvas">
+  <text x="100" y="150" font-size="40">여기를 클릭해서 수정</text>
+</svg>
+
+<script>
+const svg = document.getElementById("canvas");
+let selectedText = null;
+let isDragging = false;
+let offset = { x: 0, y: 0 };
+
+svg.addEventListener("mousedown", (e) => {
+  if (e.target.tagName === "text") {
+    selectText(e.target);
+    isDragging = true;
+
+    const bbox = e.target.getBBox();
+    offset.x = e.clientX - bbox.x;
+    offset.y = e.clientY - bbox.y;
+  } else {
+    deselectText();
+  }
+});
+
+svg.addEventListener("mousemove", (e) => {
+  if (isDragging && selectedText) {
+    selectedText.setAttribute("x", e.clientX - offset.x);
+    selectedText.setAttribute("y", e.clientY - offset.y);
+  }
+});
+
+svg.addEventListener("mouseup", () => {
+  isDragging = false;
+});
+
 svg.addEventListener("wheel", (e) => {
   if (!selectedText) return;
 
@@ -103,3 +189,4 @@ function deselectText() {
 
 </body>
 </html>
+
